@@ -170,7 +170,8 @@ def plot(*, results: pd.Series,
          smooth_equity=False, relative_equity=True,
          superimpose=True, resample=True,
          reverse_indicators=True,
-         show_legend=True, open_browser=True):
+         show_legend=True, open_browser=True,
+         plot_position=True):
     """
     Like much of GUI code everywhere, this is a mess.
     """
@@ -187,6 +188,7 @@ def plot(*, results: pd.Series,
     assert df.index.equals(results['_equity_curve'].index)
     equity_data = results['_equity_curve'].copy(deep=False)
     trades = results['_trades']
+    position_data = results['_position_curve'].copy(deep=False)
 
     plot_volume = plot_volume and not df.Volume.isnull().all()
     plot_equity = plot_equity and not trades.empty
@@ -382,6 +384,18 @@ return this.labels[index] || "";
                  .replace('(0 days ', '('))
 
         figs_above_ohlc.append(fig)
+
+    def _plot_position_section():
+        """Position section"""
+        source_key = 'position'
+        source.add(position_data['Position'], source_key)
+
+        fig = new_indicator_figure(y_axis_label="Position")
+        r = fig.scatter('index', source_key, source=source,
+                        marker='dash', size=8)
+        set_tooltips(fig, [('Position', '@position{0}')], renderers=[r])
+        fig.yaxis.formatter = NumeralTickFormatter(format="0")
+        return fig
 
     def _plot_drawdown_section():
         """Drawdown section"""
@@ -591,6 +605,9 @@ return this.labels[index] || "";
 
     if plot_equity:
         _plot_equity_section()
+
+    if plot_position:
+        figs_above_ohlc.append(_plot_position_section())
 
     if plot_return:
         _plot_equity_section(is_return=True)

@@ -680,6 +680,7 @@ class _Broker:
         self._exclusive_orders = exclusive_orders
 
         self._equity = np.tile(np.nan, len(index))
+        self._position = np.tile(np.nan, len(index))
         self.orders: List[Order] = []
         self.trades: List[Trade] = []
         self.position = Position(self)
@@ -767,6 +768,7 @@ class _Broker:
         # Log account equity for the equity curve
         equity = self.equity
         self._equity[i] = equity
+        self._position[i] = self.position.size
 
         # If equity is negative, set all to 0 and stop the simulation
         if equity <= 0:
@@ -1183,9 +1185,11 @@ class Backtest:
             data._set_length(len(self._data))
 
             equity = pd.Series(broker._equity).bfill().fillna(broker._cash).values
+            position = pd.Series(broker._position).bfill().values
             self._results = compute_stats(
                 trades=broker.closed_trades,
                 equity=equity,
+                position=position,
                 ohlc_data=self._data,
                 risk_free_rate=0.0,
                 strategy_instance=strategy,
@@ -1507,7 +1511,8 @@ class Backtest:
              smooth_equity=False, relative_equity=True,
              superimpose: Union[bool, str] = True,
              resample=True, reverse_indicators=False,
-             show_legend=True, open_browser=True):
+             show_legend=True, open_browser=True,
+             plot_position=True):
         """
         Plot the progression of the last backtest run.
 
@@ -1596,6 +1601,7 @@ class Backtest:
             filename=filename,
             plot_width=plot_width,
             plot_equity=plot_equity,
+            plot_position=plot_position,
             plot_return=plot_return,
             plot_pl=plot_pl,
             plot_volume=plot_volume,
