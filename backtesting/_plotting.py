@@ -173,7 +173,7 @@ def plot(*, results: pd.Series,
          reverse_indicators=True,
          show_legend=True, open_browser=True,
          plot_position=False, plot_fi=False, plot_macd=False,
-         plot_imp=False):
+         plot_imp=False, indicator_figure_height=90):
     """
     Like much of GUI code everywhere, this is a mess.
     """
@@ -287,7 +287,7 @@ return this.labels[index] || "";
         ('Volume', '@Volume{0,0}')]
 
     def new_indicator_figure(**kwargs):
-        kwargs.setdefault('height', 90)
+        kwargs.setdefault('height', indicator_figure_height)
         fig = new_bokeh_figure(x_range=fig_ohlc.x_range,
                                active_scroll='xwheel_zoom',
                                active_drag='xpan',

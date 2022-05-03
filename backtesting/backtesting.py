@@ -1513,7 +1513,7 @@ class Backtest:
              resample=True, reverse_indicators=False,
              show_legend=True, open_browser=True,
              plot_position=False, plot_fi=False, plot_macd=False,
-             plot_imp=False):
+             plot_imp=False,indicator_figure_height=90):
         """
         Plot the progression of the last backtest run.
 
@@ -1609,6 +1609,7 @@ class Backtest:
             plot_fi=plot_fi,
             plot_macd=plot_macd,
             plot_imp=plot_imp,
+            indicator_figure_height=indicator_figure_height,
             plot_drawdown=plot_drawdown,
             smooth_equity=smooth_equity,
             relative_equity=relative_equity,
