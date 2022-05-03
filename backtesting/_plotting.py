@@ -13,7 +13,8 @@ import pandas as pd
 from bokeh.colors import RGB
 from bokeh.colors.named import (
     lime as BULL_COLOR,
-    tomato as BEAR_COLOR
+    tomato as BEAR_COLOR,
+    skyblue as NEUTRAL_COLOR
 )
 from bokeh.plotting import figure as _figure
 from bokeh.models import (
@@ -171,7 +172,8 @@ def plot(*, results: pd.Series,
          superimpose=True, resample=True,
          reverse_indicators=True,
          show_legend=True, open_browser=True,
-         plot_position=True, plot_macd=True, plot_fi=True):
+         plot_position=True, plot_macd=True, plot_fi=True,
+         plot_imp=True):
     """
     Like much of GUI code everywhere, this is a mess.
     """
@@ -215,7 +217,7 @@ def plot(*, results: pd.Series,
         _figure,
         x_axis_type='linear',
         width=plot_width,
-        height=400-180,
+        height=400,
         tools="xpan,xwheel_zoom,box_zoom,undo,redo,reset,save",
         active_drag='xpan',
         active_scroll='xwheel_zoom')
@@ -231,6 +233,20 @@ def plot(*, results: pd.Series,
 
     source = ColumnDataSource(df)
     source.add((df.Close >= df.Open).values.astype(np.uint8).astype(str), 'inc')
+
+    def get_idata(source_key):
+        for value in indicators:
+            if value.name == source_key:
+                return value
+    if plot_imp:
+        IMP_COLORS = [BEAR_COLOR, NEUTRAL_COLOR, BULL_COLOR]
+        slowema_diff = get_idata('slowema').df.diff().values
+        macdh_diff = get_idata('macdh').df.diff().values
+        imp_data = ((slowema_diff > 0) & (macdh_diff > 0)).astype(np.int8)
+        bear_sel = (slowema_diff < 0) & (macdh_diff < 0)
+        imp_data[bear_sel] = -1
+        source.add(imp_data.astype(str), 'imp')
+        imp_cmap = factor_cmap('imp', IMP_COLORS, ['-1','0', '1'])
 
     trade_source = ColumnDataSource(dict(
         index=trades['ExitBar'],
@@ -397,11 +413,6 @@ return this.labels[index] || "";
         fig.yaxis.formatter = NumeralTickFormatter(format="0")
         return fig
 
-    def get_idata(source_key):
-        for value in indicators:
-            if value.name == source_key:
-                return value
-
     def _plot_fi_section():
         """Force Index section"""
         fig = new_indicator_figure(y_axis_label="FI")
@@ -431,10 +442,6 @@ return this.labels[index] || "";
 
     def _plot_macd_section():
         """MACD section"""
-        def get_idata(source_key):
-            for value in indicators:
-                if value.name == source_key:
-                    return value
         fig = new_indicator_figure(y_axis_label="MACD")
 
         from bokeh.models import Span
@@ -575,9 +582,21 @@ return this.labels[index] || "";
 
     def _plot_ohlc():
         """Main OHLC bars"""
-        fig_ohlc.segment('index', 'High', 'index', 'Low', source=source, color="black")
-        r = fig_ohlc.vbar('index', BAR_WIDTH, 'Open', 'Close', source=source,
-                          line_color="black", fill_color=inc_cmap)
+        if plot_imp:
+            source.add(source.data['index']+0.4, 'index_next')
+            source.add(source.data['index']-0.4, 'index_prev')
+            ohlc_kwargs = dict(
+                line_width = 3,
+                color=imp_cmap
+                )
+            fig_ohlc.segment('index', 'High', 'index', 'Low', source=source, **ohlc_kwargs)
+            fig_ohlc.segment('index', 'Close', 'index_next', 'Close', source=source, **ohlc_kwargs)
+            r = fig_ohlc.segment('index', 'Open', 'index_prev', 'Open', source=source, **ohlc_kwargs)
+        else:
+            fig_ohlc.segment('index', 'High', 'index', 'Low', source=source, color="black")
+            r = fig_ohlc.vbar('index', BAR_WIDTH, 'Open', 'Close', source=source,
+                              line_color="black", fill_color=inc_cmap)
+
         return r
 
     def _plot_ohlc_trades():
