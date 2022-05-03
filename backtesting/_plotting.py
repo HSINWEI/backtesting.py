@@ -172,8 +172,8 @@ def plot(*, results: pd.Series,
          superimpose=True, resample=True,
          reverse_indicators=True,
          show_legend=True, open_browser=True,
-         plot_position=True, plot_macd=True, plot_fi=True,
-         plot_imp=True):
+         plot_position=False, plot_fi=False, plot_macd=False,
+         plot_imp=False):
     """
     Like much of GUI code everywhere, this is a mess.
     """
