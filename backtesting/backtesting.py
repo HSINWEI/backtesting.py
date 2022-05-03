@@ -1512,7 +1512,7 @@ class Backtest:
              superimpose: Union[bool, str] = True,
              resample=True, reverse_indicators=False,
              show_legend=True, open_browser=True,
-             plot_position=True):
+             plot_position=True, plot_macd=True):
         """
         Plot the progression of the last backtest run.
 
@@ -1605,6 +1605,7 @@ class Backtest:
             plot_return=plot_return,
             plot_pl=plot_pl,
             plot_volume=plot_volume,
+            plot_macd=plot_macd,
             plot_drawdown=plot_drawdown,
             smooth_equity=smooth_equity,
             relative_equity=relative_equity,

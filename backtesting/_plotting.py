@@ -171,7 +171,7 @@ def plot(*, results: pd.Series,
          superimpose=True, resample=True,
          reverse_indicators=True,
          show_legend=True, open_browser=True,
-         plot_position=True):
+         plot_position=True, plot_macd=True):
     """
     Like much of GUI code everywhere, this is a mess.
     """
@@ -215,7 +215,7 @@ def plot(*, results: pd.Series,
         _figure,
         x_axis_type='linear',
         width=plot_width,
-        height=400,
+        height=400-180,
         tools="xpan,xwheel_zoom,box_zoom,undo,redo,reset,save",
         active_drag='xpan',
         active_scroll='xwheel_zoom')
@@ -394,6 +394,54 @@ return this.labels[index] || "";
         r = fig.scatter('index', source_key, source=source,
                         marker='dash', size=8)
         set_tooltips(fig, [('Position', '@position{0}')], renderers=[r])
+        fig.yaxis.formatter = NumeralTickFormatter(format="0")
+        return fig
+
+    def _plot_macd_section():
+        """MACD section"""
+        def get_idata(source_key):
+            for value in indicators:
+                if value.name == source_key:
+                    return value
+        fig = new_indicator_figure(y_axis_label="MACD")
+
+        from bokeh.models import Span
+        hline = Span(location=0, dimension='width', line_color='green', line_width=1)
+        fig.renderers.extend([hline])
+
+        source_key = 'macdh'
+        arr = get_idata(source_key)
+        source.add(arr, source_key)
+        # SECOND AXIS
+        y_column2 = 'macdh'
+        y_column2_range = y_column2 + "_range"
+        y_overlimit = 0.05
+        fig.extra_y_ranges = {
+            y_column2_range: Range1d(
+                start=min(arr) * (1 - y_overlimit),
+                end=max(arr) * (1 + y_overlimit),
+            )
+        }
+        from bokeh.models import LinearAxis
+        fig.add_layout(LinearAxis(y_range_name=y_column2_range), "right")
+
+        r3 = fig.vbar('index', BAR_WIDTH, source_key, source=source,
+                      y_range_name=y_column2_range,
+                      alpha=0.5)
+
+        source_key = 'macd'
+        source.add(get_idata(source_key), source_key)
+        r1 = fig.line('index', source_key, source=source,
+                     line_color='black')
+
+        source_key = 'signal'
+        source.add(get_idata(source_key), source_key)
+        r2 = fig.line('index', source_key, source=source,
+                     line_color='red', line_dash='dashed')
+
+        set_tooltips(fig, [('MACD', '@macd{0,0.0[00]}'),
+                           ('Signal', '@signal{0,0.0[00]}'),
+                           ('MACDH','@macdh{0,0.0[00]}')], renderers=[r1,r2,r3])
         fig.yaxis.formatter = NumeralTickFormatter(format="0")
         return fig
 
@@ -621,6 +669,9 @@ return this.labels[index] || "";
     if plot_volume:
         fig_volume = _plot_volume_section()
         figs_below_ohlc.append(fig_volume)
+
+    if plot_macd:
+        figs_below_ohlc.append(_plot_macd_section())
 
     if superimpose and is_datetime_index:
         _plot_superimposed_ohlc()
