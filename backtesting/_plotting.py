@@ -171,7 +171,7 @@ def plot(*, results: pd.Series,
          superimpose=True, resample=True,
          reverse_indicators=True,
          show_legend=True, open_browser=True,
-         plot_position=True, plot_macd=True):
+         plot_position=True, plot_macd=True, plot_fi=True):
     """
     Like much of GUI code everywhere, this is a mess.
     """
@@ -394,6 +394,38 @@ return this.labels[index] || "";
         r = fig.scatter('index', source_key, source=source,
                         marker='dash', size=8)
         set_tooltips(fig, [('Position', '@position{0}')], renderers=[r])
+        fig.yaxis.formatter = NumeralTickFormatter(format="0")
+        return fig
+
+    def get_idata(source_key):
+        for value in indicators:
+            if value.name == source_key:
+                return value
+
+    def _plot_fi_section():
+        """Force Index section"""
+        fig = new_indicator_figure(y_axis_label="FI")
+
+
+        source_key = 'fi'
+        arr = get_idata(source_key)
+
+        arrp = arr.copy()
+        arrp[arrp<0] = 0
+        source.add(arrp, 'fipos')
+        r2 = fig.vbar('index', BAR_WIDTH, 'fipos', source=source,
+                      color=BULL_COLOR)
+
+        arrn = arr.copy()
+        arrn[arrn>=0] = 0
+        source.add(arrn, 'fineg')
+        r3 = fig.vbar('index', BAR_WIDTH, 'fineg', source=source,
+                      color=BEAR_COLOR)
+
+        source.add(arr, source_key)
+        r1 = fig.line('index', source_key, source=source)
+
+        set_tooltips(fig, [('FI', '@fi{0,0.0[00]}')], renderers=[r1])
         fig.yaxis.formatter = NumeralTickFormatter(format="0")
         return fig
 
@@ -669,6 +701,9 @@ return this.labels[index] || "";
     if plot_volume:
         fig_volume = _plot_volume_section()
         figs_below_ohlc.append(fig_volume)
+
+    if plot_fi:
+        figs_below_ohlc.append(_plot_fi_section())
 
     if plot_macd:
         figs_below_ohlc.append(_plot_macd_section())
