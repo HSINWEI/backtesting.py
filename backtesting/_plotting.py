@@ -240,7 +240,7 @@ def plot(*, results: pd.Series,
                 return value
     if plot_imp:
         IMP_COLORS = [BEAR_COLOR, NEUTRAL_COLOR, BULL_COLOR]
-        slowema_diff = get_idata('slowema').df.diff().values
+        slowema_diff = get_idata('fastma').df.diff().values
         macdh_diff = get_idata('macdh').df.diff().values
         imp_data = ((slowema_diff > 0) & (macdh_diff > 0)).astype(np.int8)
         bear_sel = (slowema_diff < 0) & (macdh_diff < 0)
