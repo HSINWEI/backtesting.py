@@ -173,6 +173,7 @@ def plot(*, results: pd.Series,
          reverse_indicators=True,
          show_legend=True, open_browser=True,
          plot_position=False, plot_fi=False, plot_macd=False,
+         plot_mpctl=False,
          plot_imp=False, indicator_figure_height=90):
     """
     Like much of GUI code everywhere, this is a mess.
@@ -437,6 +438,30 @@ return this.labels[index] || "";
         r1 = fig.line('index', source_key, source=source)
 
         set_tooltips(fig, [('FI', '@fi{0,0.0[00]}')], renderers=[r1])
+        fig.yaxis.formatter = NumeralTickFormatter(format="0")
+        return fig
+
+    def _plot_mpctl_section():
+        """mpctl section"""
+        fig = new_indicator_figure(y_axis_label="MPCTL")
+
+        from bokeh.models import Span
+        hline = Span(location=50, dimension='width', line_color='green',
+                     line_width=1, line_dash='dashed')
+        fig.renderers.extend([hline])
+
+        source_key = 'hpi'
+        source.add(get_idata(source_key), source_key)
+        r1 = fig.line('index', source_key, source=source,
+                     line_color='green')
+
+        source_key = 'lpi'
+        source.add(get_idata(source_key), source_key)
+        r2 = fig.line('index', source_key, source=source,
+                     line_color='red')
+
+        set_tooltips(fig, [('HPI', '@hpi{0,0.0[00]}'),
+                           ('LPI', '@lpi{0,0.0[00]}')], renderers=[r1,r2])
         fig.yaxis.formatter = NumeralTickFormatter(format="0")
         return fig
 
@@ -726,6 +751,9 @@ return this.labels[index] || "";
 
     if plot_macd:
         figs_below_ohlc.append(_plot_macd_section())
+
+    if plot_mpctl:
+        figs_below_ohlc.append(_plot_mpctl_section())
 
     if superimpose and is_datetime_index:
         _plot_superimposed_ohlc()
