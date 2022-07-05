@@ -78,6 +78,7 @@ class Strategy(metaclass=ABCMeta):
     def I(self,  # noqa: E741, E743
           func: Callable, *args,
           name=None, plot=True, overlay=None, color=None, scatter=False,
+          plotprops=None,
           **kwargs) -> np.ndarray:
         """
         Declare indicator. An indicator is just an array of values,
@@ -153,7 +154,7 @@ class Strategy(metaclass=ABCMeta):
                 overlay = ((x < 1.4) & (x > .6)).mean() > .6
 
         value = _Indicator(value, name=name, plot=plot, overlay=overlay,
-                           color=color, scatter=scatter,
+                           color=color, scatter=scatter, plotprops=plotprops,
                            # _Indicator.s Series accessor uses this:
                            index=self.data.index)
         self._indicators.append(value)

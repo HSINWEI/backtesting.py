@@ -12,7 +12,7 @@ import pandas as pd
 
 from bokeh.colors import RGB
 from bokeh.colors.named import (
-    lime as BULL_COLOR,
+    limegreen as BULL_COLOR,
     tomato as BEAR_COLOR,
     skyblue as NEUTRAL_COLOR
 )
@@ -628,6 +628,111 @@ return this.labels[index] || "";
                             source=trade_source, line_color=trades_cmap,
                             legend_label=f'Trades ({len(trades)})',
                             line_width=8, line_alpha=1, line_dash='dotted')
+    def _plot_indicators2():
+        """Strategy indicators 2
+        plotprops = dict(
+            name='iname',
+            type='vbar',
+            color='blue',
+            marker='circle',
+            label='ilabel',
+            signed_color=['red','green'],
+            )
+
+        """
+
+        class LegendStr(str):
+            # The legend string is such a string that only matches
+            # itself if it's the exact same object. This ensures
+            # legend items are listed separately even when they have the
+            # same string contents. Otherwise, Bokeh would always consider
+            # equal strings as one and the same legend item.
+            def __eq__(self, other):
+                return self is other
+
+        ohlc_colors = colorgen()
+        indicator_figs2 = []
+
+        for i, value in enumerate(indicators):
+            value = np.atleast_2d(value)
+
+            if not value._opts.get('plotprops'):
+                continue
+
+            fig = new_indicator_figure()
+            indicator_figs2.append(fig)
+
+            tooltips = []
+            y_column2 = None
+            for j, (arr,props) in enumerate(zip(value,value._opts['plotprops']), 1):
+                color = props.get('color')
+                neg_color = props.get('neg_color')
+                type = props['type']
+                label = props['label']
+                marker = props.get('marker') or 'circle'
+                linestyle = props.get('linestyle', 'solid')
+                source_name = props['name']
+                if arr.dtype == bool:
+                    arr = arr.astype(int)
+                source.add(arr, source_name)
+                if neg_color is not None:
+                    arrp = arr.copy()
+                    arrp[arrp<0] = 0
+                    source.add(arrp, f'{source_name}pos')
+                    arrn = arr.copy()
+                    arrn[arrn>0] = 0
+                    source.add(arrn, f'{source_name}neg')
+                tooltips.append([label, f'@{{{source_name}}}{{0,0.0[0000]}}'])
+                if type == 'scatter':
+                    r = fig.scatter(
+                        'index', source_name, source=source,
+                        legend_label=LegendStr(label), color=color,
+                        marker=marker, radius=BAR_WIDTH / 2 * .9)
+                elif type == 'vbar':
+                    if y_column2 is None:
+                        """ SECOND AXIS
+                            create y_column2_range if needed
+                        """
+                        y_column2 = label
+                        y_column2_range = y_column2 + "_range"
+                        y_overlimit = 0.05
+                        fig.extra_y_ranges = {
+                            y_column2_range: Range1d(
+                                start=min(arr) * (1 - y_overlimit),
+                                end=max(arr) * (1 + y_overlimit),
+                            )
+                        }
+                        from bokeh.models import LinearAxis
+                        fig.add_layout(LinearAxis(y_range_name=y_column2_range), "right")
+
+                    if neg_color is not None:
+                        r = fig.vbar('index', BAR_WIDTH, f'{source_name}pos', source=source,
+                                     legend_label=label,
+                                     y_range_name=y_column2_range,
+                                     color=color,
+                                     alpha=0.5)
+                        r = fig.vbar('index', BAR_WIDTH, f'{source_name}neg', source=source,
+                                     legend_label=label,
+                                     y_range_name=y_column2_range,
+                                     color=neg_color,
+                                     alpha=0.5)
+                    else:
+                        r = fig.vbar('index', BAR_WIDTH, source_name, source=source,
+                                     legend_label=LegendStr(label),
+                                      y_range_name=y_column2_range,
+                                      alpha=0.5)
+
+                else:
+                    r = fig.line(
+                        'index', source_name, source=source,
+                        legend_label=LegendStr(label), line_color=color,
+                        line_width=1.3, line_dash=linestyle)
+            set_tooltips(fig, tooltips, vline=True, renderers=[r])
+            # If the sole indicator line on this figure,
+            # have the legend only contain text without the glyph
+            if len(value) == 1:
+                fig.legend.glyph_width = 0
+        return indicator_figs2
 
     def _plot_indicators():
         """Strategy indicators"""
@@ -654,6 +759,7 @@ return this.labels[index] || "";
 
         for i, value in enumerate(indicators):
             value = np.atleast_2d(value)
+
 
             # Use .get()! A user might have assigned a Strategy.data-evolved
             # _Array without Strategy.I()
@@ -754,12 +860,16 @@ return this.labels[index] || "";
     if superimpose and is_datetime_index:
         _plot_superimposed_ohlc()
 
+    indicator_figs2 = _plot_indicators2()
+    figs_below_ohlc.extend(indicator_figs2)
+
     ohlc_bars = _plot_ohlc()
     _plot_ohlc_trades()
     indicator_figs = _plot_indicators()
     if reverse_indicators:
         indicator_figs = indicator_figs[::-1]
     figs_below_ohlc.extend(indicator_figs)
+
 
     set_tooltips(fig_ohlc, ohlc_tooltips, vline=True, renderers=[ohlc_bars])
 
