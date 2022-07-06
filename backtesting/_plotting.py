@@ -636,7 +636,7 @@ return this.labels[index] || "";
             color='blue',
             marker='circle',
             label='ilabel',
-            signed_color=['red','green'],
+            neg_color='red',
             )
 
         """
@@ -671,6 +671,7 @@ return this.labels[index] || "";
                 label = props['label']
                 marker = props.get('marker') or 'circle'
                 linestyle = props.get('linestyle', 'solid')
+                format = props.get('format', '0,0.0[0000]')
                 source_name = props['name']
                 if arr.dtype == bool:
                     arr = arr.astype(int)
@@ -682,7 +683,7 @@ return this.labels[index] || "";
                     arrn = arr.copy()
                     arrn[arrn>0] = 0
                     source.add(arrn, f'{source_name}neg')
-                tooltips.append([label, f'@{{{source_name}}}{{0,0.0[0000]}}'])
+                tooltips.append([label, f'@{{{source_name}}}{{{format}}}'])
                 if type == 'scatter':
                     r = fig.scatter(
                         'index', source_name, source=source,
@@ -704,6 +705,7 @@ return this.labels[index] || "";
                         }
                         from bokeh.models import LinearAxis
                         fig.add_layout(LinearAxis(y_range_name=y_column2_range), "right")
+                        fig.yaxis.formatter = NumeralTickFormatter(format=format)
 
                     if neg_color is not None:
                         r = fig.vbar('index', BAR_WIDTH, f'{source_name}pos', source=source,
