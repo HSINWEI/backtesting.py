@@ -78,6 +78,7 @@ class Strategy(metaclass=ABCMeta):
     def I(self,  # noqa: E741, E743
           func: Callable, *args,
           name=None, plot=True, overlay=None, color=None, scatter=False,
+          plotprops=None,
           **kwargs) -> np.ndarray:
         """
         Declare indicator. An indicator is just an array of values,
@@ -153,7 +154,7 @@ class Strategy(metaclass=ABCMeta):
                 overlay = ((x < 1.4) & (x > .6)).mean() > .6
 
         value = _Indicator(value, name=name, plot=plot, overlay=overlay,
-                           color=color, scatter=scatter,
+                           color=color, scatter=scatter, plotprops=plotprops,
                            # _Indicator.s Series accessor uses this:
                            index=self.data.index)
         self._indicators.append(value)
@@ -1507,7 +1508,8 @@ class Backtest:
              smooth_equity=False, relative_equity=True,
              superimpose: Union[bool, str] = True,
              resample=True, reverse_indicators=False,
-             show_legend=True, open_browser=True):
+             show_legend=True, open_browser=True,
+             plot_imp=False):
         """
         Plot the progression of the last backtest run.
 
@@ -1599,6 +1601,7 @@ class Backtest:
             plot_return=plot_return,
             plot_pl=plot_pl,
             plot_volume=plot_volume,
+            plot_imp=plot_imp,
             plot_drawdown=plot_drawdown,
             smooth_equity=smooth_equity,
             relative_equity=relative_equity,
