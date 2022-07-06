@@ -607,7 +607,7 @@ return this.labels[index] || "";
             source.add(source.data['index']+0.4, 'index_next')
             source.add(source.data['index']-0.4, 'index_prev')
             ohlc_kwargs = dict(
-                line_width = 3,
+                line_width = BAR_WIDTH*2.5,
                 color=imp_cmap
                 )
             fig_ohlc.segment('index', 'High', 'index', 'Low', source=source, **ohlc_kwargs)
